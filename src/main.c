@@ -90,7 +90,7 @@ main(int argc, char *argv[])
 
         const char *file_name = argv[optind];
 
-        int err = mkdir(dir, 0666);
+        int err = mkdir(dir, S_IRUSR | S_IWUSR | S_IXUSR);
         if (err == -1 && errno != EEXIST) {
                 fprintf(stderr, "ERROR: Could not create initial config folder\n");
                 exit(1);
