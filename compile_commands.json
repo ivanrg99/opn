@@ -1,0 +1,25 @@
+[
+ {
+  "directory": "/home/aelita/projects/opn",
+  "arguments": [
+   "clang",
+   "-O1",
+   "-g",
+   "-Wall",
+   "-Wextra",
+   "-Wpedantic",
+   "-fsanitize-trap",
+   "-Werror",
+   "-std=c99",
+   "-fsanitize=address,undefined",
+   "-Wconversion",
+   "-Wdouble-promotion",
+   "-DDEBUG",
+   "-c",
+   "src/main.c",
+   "-o",
+   "obj/main.o"
+  ],
+  "file": "src/main.c"
+ }
+]
