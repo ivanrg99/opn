@@ -22,7 +22,7 @@ get_configdir(void)
                 exit(1);
         }
 
-        char *XDG_CONFIG_HOME = getenv("XDG_CONFIG_HOME");
+        const char *XDG_CONFIG_HOME = getenv("XDG_CONFIG_HOME");
 
         if (XDG_CONFIG_HOME == NULL) {
                 XDG_CONFIG_HOME = DEFAULT_CONFIG_FOLDER;
@@ -71,6 +71,7 @@ main(int argc, char *argv[])
                                         fprintf(stderr,
                                                 "Option -%c requires the name of a program as an argument.\n",
                                                 optopt);
+						exit(1);
                                 } else if (isprint(optopt)) {
                                         fprintf(stderr,
                                                 "Unknown option `-%c'.\n",
@@ -78,7 +79,7 @@ main(int argc, char *argv[])
                                         exit(1);
                                 } else {
                                         fprintf(stderr,
-                                                "Unknown option character `\\x%x'.\n",
+                                                "Unknown option character `\\x%d'.\n",
                                                 optopt);
                                         exit(1);
                                 }
@@ -87,8 +88,11 @@ main(int argc, char *argv[])
                                 abort();
                 }
         }
-
         const char *file_name = argv[optind];
+	if (file_name == NULL) {
+                fprintf(stderr, "ERROR: Missing file to open\n");
+                exit(1);
+	}
 
         int err = mkdir(dir, S_IRUSR | S_IWUSR | S_IXUSR);
         if (err == -1 && errno != EEXIST) {
