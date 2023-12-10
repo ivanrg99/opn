@@ -114,7 +114,7 @@ $(TEST)/bin/%: $(TEST)/%.c
 	$(CC) $(CFLAGS) $^ $(TEST_OBJS) $(LDFLAGS) -o $@
 
 run: $(BIN)
-	./$(BIN) test_file
+	./$(BIN) test_file -d code
 
 .PHONY: test clean
 

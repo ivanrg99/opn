@@ -99,7 +99,35 @@ parse_arguments(int argc, char *argv[])
 
         return args;
 }
+int
+truncate_config_file(int size)
+{
+        /* Get config directory */
+        char *dir = get_configdir();
+        int err = mkdir(dir, S_IRUSR | S_IWUSR | S_IXUSR);
+        if (err == -1 && errno != EEXIST) {
+                fprintf(stderr, "ERROR: Could not create initial config folder\n");
+                return -1;
+        }
 
+        /* Get config file path */
+        /* 1 for null terminator and 1 for slash */
+        size_t config_file_size = strlen(dir) + strlen(CONFIG_FILE_NAME) + 1 + 1;
+        char *config_file = calloc(config_file_size, sizeof(char));
+        if (config_file == NULL) {
+                fprintf(stderr, "ERROR: Could not allocate enough memory\n");
+                free(dir);
+                return -1;
+        }
+        snprintf(config_file, config_file_size, "%s/%s", dir, CONFIG_FILE_NAME);
+
+        /* Truncate config file */
+        int res = truncate(config_file, (long)size);
+
+        free(config_file);
+        free(dir);
+        return res;
+}
 
 FILE *
 get_config_file(void)
@@ -109,7 +137,7 @@ get_config_file(void)
         int err = mkdir(dir, S_IRUSR | S_IWUSR | S_IXUSR);
         if (err == -1 && errno != EEXIST) {
                 fprintf(stderr, "ERROR: Could not create initial config folder\n");
-                exit(1);
+                return NULL;
         }
 
         /* Get config file path */
@@ -118,15 +146,19 @@ get_config_file(void)
         char *config_file = calloc(config_file_size, sizeof(char));
         if (config_file == NULL) {
                 fprintf(stderr, "ERROR: Could not allocate enough memory\n");
-                exit(1);
+                free(dir);
+                return NULL;
         }
         snprintf(config_file, config_file_size, "%s/%s", dir, CONFIG_FILE_NAME);
 
         /* Open config file */
-        FILE *f = fopen(config_file, "a+");
+        FILE *f = fopen(config_file, "r+");
         if (f == NULL) {
-                fprintf(stderr, "ERROR: Could not open mimeapps.list at directory %s\n", dir);
-                exit(1);
+                fprintf(stderr, "ERROR: Could not open %s at directory %s\n",
+                        CONFIG_FILE_NAME, dir);
+                free(dir);
+                free(config_file);
+                return NULL;
         }
 
         free(config_file);
@@ -226,7 +258,8 @@ load_entire_file(FILE *f)
         rewind(f);
         char *contents = malloc(size * sizeof(char) + 1);
         if (contents == NULL) {
-                fprintf(stderr, "Could not allocate enough memory to read mimeapps.list\n");
+                fprintf(stderr, "Could not allocate enough memory to read %s\n",
+                        CONFIG_FILE_NAME);
                 return NULL;
         }
 
@@ -263,7 +296,7 @@ strtrim(char *str)
 KVEntry_DA
 get_all_config_entries(char *file_contents)
 {
-        KVEntry_DA entries = KVEntry_DA_New(40);
+        KVEntry_DA entries = KVEntry_DA_New(30);
 
         char *line_savepoint = NULL;
 
@@ -287,17 +320,65 @@ get_all_config_entries(char *file_contents)
 }
 
 void
-find_program_in_config(FILE *f)
+resave_config_file(FILE *f, KVEntry_DA entries)
+{
+        rewind(f);
+        char line[LINE_SIZE];
+        int total_size = 0;
+        for (size_t i = 0; i < entries.len; ++i) {
+                KVEntry e = entries.array[i];
+                total_size += snprintf(line, LINE_SIZE, "%s=%s\n", e.mime_type, e.program);
+                fputs(line, f);
+        }
+        truncate_config_file(total_size);
+}
+
+/**
+ *
+ * @param f
+ * @param type
+ * @param args
+ * @return FREE THIS
+ */
+char *
+find_program_in_config(FILE *f, char *type, Args args)
 {
         char *file_contents = load_entire_file(f);
         KVEntry_DA entries = get_all_config_entries(file_contents);
+        char *program = NULL;
+        for (size_t i = 0; i < entries.len; ++i) {
+                KVEntry *e = &entries.array[i];
+                if (strcmp(e->mime_type, type) == 0) {
+                        if (args.set_default) {
+                                e->program = args.program_name;
+                        }
+                        program = strdup(e->program);
+                        break;
+                }
+        }
 
-        for (size_t i = 0; i < entries.len; i++) {
-                KVEntry e = entries.array[i];
+        if (program == NULL) {
+                if (args.set_default) {
+                        KVEntry e = {
+                                .program = args.program_name,
+                                .mime_type = type,
+                        };
+                        KVEntry_DA_Push(&entries, e);
+                        program = strdup(args.program_name);
+                } else {
+                        fprintf(stderr, "No program specified to open things of type blabla"
+                                        "you can do so by running the same command with -d blabla\n");
+                }
+        }
+
+        // We need to resave the file with the changes
+        if (args.set_default) {
+                resave_config_file(f, entries);
         }
 
         free(file_contents);
         KVEntry_DA_Free(&entries);
+        return program;
 }
 
 int
@@ -313,18 +394,28 @@ main(int argc, char *argv[])
         Args args = parse_arguments(argc, argv);
 
         FILE *f = get_config_file();
+        if (f == NULL) {
+                exit(1);
+        }
 
         char *type = get_file_mime_type(args.file_path);
         if (type == NULL) {
-                goto cleanup;
+                fclose(f);
+                free(type);
+                exit(1);
         }
 
-        find_program_in_config(f);
+        char *program = find_program_in_config(f, type, args);
+        if (program == NULL) {
+                fclose(f);
+                free(type);
+                exit(1);
+        }
 
-        printf("TYPE: %s\n", type);
+        if (execlp(program, program, args.file_path, NULL) < 0) {
+                perror("Error running default program");
+        }
 
-        cleanup:
-        fclose(f);
-        free(type);
+        free(program);
         return 0;
 }
