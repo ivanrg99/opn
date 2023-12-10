@@ -30,7 +30,7 @@ CC = gcc
 #CFLAGS   += -Wsign-conversion -Wvla
 
 # If gcc:
-CFLAGS   += -g3 -Wall -Wextra -Wpedantic -Werror -std=c99
+CFLAGS   += -g3 -Wall -Wextra -Wpedantic -std=gnu11
 CFLAGS   += -fsanitize=address,undefined -Wconversion -Wdouble-promotion
 CFLAGS   += -fpie -Wl,-pie -Wstack-protector --param ssp-buffer-size=4
 CFLAGS   += -pedantic -fstack-protector-all -fstack-protector-strong
@@ -48,6 +48,7 @@ CFLAGS   += -Wcast-align -Wdangling-else -Wenum-compare -Wenum-conversion -Wsign
 CFLAGS   += -Wsign-conversion -Wlogical-op -Wvla -Wvector-operation-performance
 
 CPPFLAGS += -DDEBUG -D_FORTIFY_SOURCE=2
+LDFLAGS += -lmagic
 
 
 # Main folder variables
