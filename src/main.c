@@ -122,6 +122,7 @@ truncate_config_file(int size)
         snprintf(config_file, config_file_size, "%s/%s", dir, CONFIG_FILE_NAME);
 
         /* Truncate config file */
+        printf("Truncating %s\n", config_file);
         int res = truncate(config_file, (long)size);
 
         free(config_file);
@@ -322,14 +323,25 @@ get_all_config_entries(char *file_contents)
 void
 resave_config_file(FILE *f, KVEntry_DA entries)
 {
+        //DELETEME
+        for (size_t i = 0; i < entries.len; ++i) {
+                KVEntry *e = &entries.array[i];
+                printf("ENTRY: %s=%s\n", e->mime_type, e->program);
+        }
         rewind(f);
         char line[LINE_SIZE];
         int total_size = 0;
         for (size_t i = 0; i < entries.len; ++i) {
+                printf("SIZE: %d\n", total_size);
                 KVEntry e = entries.array[i];
                 total_size += snprintf(line, LINE_SIZE, "%s=%s\n", e.mime_type, e.program);
-                fputs(line, f);
+                printf("SIZE: %d\n", total_size);
+                printf("WRITING: %s\n", line);
+                int res = fputs(line, f);
+                printf("FPUTS RES: %d\n", res);
+                perror(NULL);
         }
+        fflush(f);
         truncate_config_file(total_size);
 }
 
@@ -370,6 +382,11 @@ find_program_in_config(FILE *f, char *type, Args args)
                                         "you can do so by running the same command with -d blabla\n");
                 }
         }
+        //DELETEME
+        for (size_t i = 0; i < entries.len; ++i) {
+                KVEntry *e = &entries.array[i];
+                printf("ENTRY: %s=%s\n", e->mime_type, e->program);
+        }
 
         // We need to resave the file with the changes
         if (args.set_default) {
@@ -407,8 +424,6 @@ main(int argc, char *argv[])
 
         char *program = find_program_in_config(f, type, args);
         if (program == NULL) {
-                fclose(f);
-                free(type);
                 exit(1);
         }
 
@@ -417,5 +432,7 @@ main(int argc, char *argv[])
         }
 
         free(program);
+        fclose(f);
+        free(type);
         return 0;
 }
