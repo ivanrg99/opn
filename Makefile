@@ -33,7 +33,7 @@ LDFLAGS += -lmagic
 RM := rm -rf
 
 BIN  = opn
-SRC = main.c
+SRC = opn.c
 OBJ = ${SRC:.c=.o}
 
 # Targets
