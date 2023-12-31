@@ -2,9 +2,11 @@
 #define OPN_CONFIG_H
 
 #include <stdlib.h>
+#include <stdbool.h>
 
 typedef struct {
     bool set_default;
+    bool run_in_background;
     char *program_name;
     char *file_path;
 } Args;

@@ -2,3 +2,4 @@ obj
 compile_commands.json
 .idea
 opn
+*.o
