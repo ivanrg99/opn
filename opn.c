@@ -11,6 +11,23 @@
 
 #include "config.h"
 
+typedef struct {
+    bool set_default;
+    bool run_in_background;
+    char *program_name;
+    char *file_path;
+} Args;
+
+typedef struct {
+    char *mime_type;
+    char *program;
+} KVEntry;
+
+typedef struct {
+    size_t len;
+    size_t cap;
+    KVEntry *array;
+} KVEntry_DA;
 
 /* Returns the appropriate config folder path as a malloced null terminated string
  * If it can't generate the string it will exit the program with an error
@@ -33,8 +50,9 @@ get_configdir(void)
 
 	size_t n = strlen(HOME) + strlen(XDG_CONFIG_HOME) +
 		   strlen(DEFAULT_SETTINGS_FOLDER);
-	n = n + 2 +
-	    1; /* 1 for the / delimiters and 1 for the null terminator */
+
+	/* 1 for the / delimiters and 1 for the null terminator */
+	n = n + 2 + 1;
 	char *configfile = calloc(n, sizeof(char));
 	if (configfile == NULL) {
 		fprintf(stderr,
@@ -251,14 +269,6 @@ KVEntry_DA_Push(KVEntry_DA *d, KVEntry e)
 	d->len++;
 }
 
-KVEntry
-KVEntry_DA_Pop(KVEntry_DA *d)
-{
-	d->len--;
-	return d->array[d->len];
-}
-
-
 /* Returns a string with the whole contents of the file as a null terminated malloced string
  * Or NULL on error
  * The caller is responsible for freeing the string
@@ -310,7 +320,7 @@ strtrim(char *str)
 KVEntry_DA
 get_all_config_entries(char *file_contents)
 {
-	KVEntry_DA entries = KVEntry_DA_New(30);
+	KVEntry_DA entries = KVEntry_DA_New(1);
 
 	char *line_savepoint = NULL;
 
