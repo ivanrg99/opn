@@ -16,22 +16,32 @@ typedef struct {
     bool run_in_background;
     char *program_name;
     char *file_path;
-} Args;
+} opn_state;
 
 typedef struct {
     char *mime_type;
     char *program;
-} KVEntry;
+} kv_entry;
 
 typedef struct {
     size_t len;
     size_t cap;
-    KVEntry *array;
-} KVEntry_DA;
+    kv_entry *data;
+} kv_entry_array;
 
-/* Returns the appropriate config folder path as a malloced null terminated string
- * If it can't generate the string it will exit the program with an error
- * The caller is responsible for freeing the string that is returned
+void
+print_usage(void)
+{
+	printf("Usage: opn [OPTIONS] [FILE]\n"
+	       "Open FILE with user's preferred application\n\n"
+	       "-d <application>\tOpens FILE with <application> and sets "
+	       "<application> as the preferred application for opening FILEs\n"
+	       "-b\t\t\tLaunches the preferred application in detached mode (background)\n");
+}
+
+
+/*
+ * Caller must free returned string
  */
 char *
 get_configdir(void)
@@ -51,7 +61,7 @@ get_configdir(void)
 	size_t n = strlen(HOME) + strlen(XDG_CONFIG_HOME) +
 		   strlen(DEFAULT_SETTINGS_FOLDER);
 
-	/* 1 for the / delimiters and 1 for the null terminator */
+	/* 2 for the / delimiters and 1 for the null terminator */
 	n = n + 2 + 1;
 	char *configfile = calloc(n, sizeof(char));
 	if (configfile == NULL) {
@@ -67,30 +77,33 @@ get_configdir(void)
 }
 
 
-Args
+opn_state
 parse_arguments(int argc, char *argv[])
 {
 	if (argc == 1) {
-		printf("Print help\n");
+		print_usage();
 		exit(1);
 	}
 
-	Args args = {0};
+	opn_state args = {0};
 
 	int c;
-	while ((c = getopt(argc, argv, "bd:")) != -1) {
+	while ((c = getopt(argc, argv, "bhd:")) != -1) {
 		switch (c) {
+			case 'b':
+				args.run_in_background = true;
+				break;
 			case 'd':
 				args.set_default = true;
 				args.program_name = optarg;
 				break;
-			case 'b':
-				args.run_in_background = true;
-				break;
+			case 'h':
+				print_usage();
+				exit(0);
 			case '?':
 				if (optopt == 'd') {
 					fprintf(stderr,
-						"Option -%c requires the name of a program as an argument.\n",
+						"Option -%c needs to be followed by an application name.\n",
 						optopt);
 					exit(1);
 				} else if (isprint(optopt)) {
@@ -138,17 +151,17 @@ truncate_config_file(int size)
 	/* Get config file path */
 	/* 1 for null terminator and 1 for slash */
 	size_t config_file_size =
-		strlen(dir) + strlen(CONFIG_FILE_NAME) + 1 + 1;
+		strlen(dir) + strlen(DEFAULT_CONFIG_FILE_NAME) + 1 + 1;
 	char *config_file = calloc(config_file_size, sizeof(char));
 	if (config_file == NULL) {
 		fprintf(stderr, "ERROR: Could not allocate enough memory\n");
 		free(dir);
 		return -1;
 	}
-	snprintf(config_file, config_file_size, "%s/%s", dir, CONFIG_FILE_NAME);
+	snprintf(config_file, config_file_size, "%s/%s", dir,
+		 DEFAULT_CONFIG_FILE_NAME);
 
 	/* Truncate config file */
-	printf("Truncating %s\n", config_file);
 	int res = truncate(config_file, (long) size);
 
 	free(config_file);
@@ -171,20 +184,21 @@ get_config_file(void)
 	/* Get config file path */
 	/* 1 for null terminator and 1 for slash */
 	size_t config_file_size =
-		strlen(dir) + strlen(CONFIG_FILE_NAME) + 1 + 1;
+		strlen(dir) + strlen(DEFAULT_CONFIG_FILE_NAME) + 1 + 1;
 	char *config_file = calloc(config_file_size, sizeof(char));
 	if (config_file == NULL) {
 		fprintf(stderr, "ERROR: Could not allocate enough memory\n");
 		free(dir);
 		return NULL;
 	}
-	snprintf(config_file, config_file_size, "%s/%s", dir, CONFIG_FILE_NAME);
+	snprintf(config_file, config_file_size, "%s/%s", dir,
+		 DEFAULT_CONFIG_FILE_NAME);
 
 	/* Open config file */
 	FILE *f = fopen(config_file, "r+");
 	if (f == NULL) {
 		fprintf(stderr, "ERROR: Could not open %s at directory %s\n",
-			CONFIG_FILE_NAME, dir);
+			DEFAULT_CONFIG_FILE_NAME, dir);
 		free(dir);
 		free(config_file);
 		return NULL;
@@ -195,9 +209,8 @@ get_config_file(void)
 	return f;
 }
 
-/* Returns the mime type of the file as a malloced null terminated string
- * Or NULL if error, as well as printing the error
- * The caller is responsible for freeing the string that is returned
+/*
+ * Caller must free returned string
  */
 char *
 get_file_mime_type(const char *file_path)
@@ -232,46 +245,45 @@ get_file_mime_type(const char *file_path)
 	return res;
 }
 
-KVEntry_DA
-KVEntry_DA_New(size_t capacity)
+kv_entry_array
+kv_entry_array_alloc(size_t capacity)
 {
-	KVEntry_DA d = {0};
+	kv_entry_array d = {0};
 	d.cap = capacity;
-	d.array = malloc(sizeof(KVEntry) * capacity);
-	if (d.array == NULL) {
+	d.data = malloc(sizeof(kv_entry) * capacity);
+	if (d.data == NULL) {
 		fprintf(stderr, "Could not allocate enough memory\n");
 	}
 	return d;
 }
 
 void
-KVEntry_DA_Free(KVEntry_DA *d)
+kv_entry_array_free(kv_entry_array *d)
 {
 	d->cap = 0;
 	d->len = 0;
-	free(d->array);
+	free(d->data);
 }
 
 void
-KVEntry_DA_Push(KVEntry_DA *d, KVEntry e)
+kv_entry_array_push(kv_entry_array *d, kv_entry e)
 {
 	if (d->len == d->cap) {
 		d->cap *= 2;
-		KVEntry *cpy = d->array;
-		d->array = realloc(d->array, d->cap * sizeof(KVEntry));
-		if (d->array == NULL) {
+		kv_entry *cpy = d->data;
+		d->data = realloc(d->data, d->cap * sizeof(kv_entry));
+		if (d->data == NULL) {
 			fprintf(stderr,
-				"Failed to reallocate config entries dynamic array\n");
+				"Failed to reallocate config entries dynamic data\n");
 			free(cpy);
 		}
 	}
-	d->array[d->len] = e;
+	d->data[d->len] = e;
 	d->len++;
 }
 
-/* Returns a string with the whole contents of the file as a null terminated malloced string
- * Or NULL on error
- * The caller is responsible for freeing the string
+/*
+ * The caller is responsible for freeing the string that is returned
  */
 char *
 load_entire_file(FILE *f)
@@ -283,7 +295,7 @@ load_entire_file(FILE *f)
 	char *contents = malloc(size * sizeof(char) + 1);
 	if (contents == NULL) {
 		fprintf(stderr, "Could not allocate enough memory to read %s\n",
-			CONFIG_FILE_NAME);
+			DEFAULT_CONFIG_FILE_NAME);
 		return NULL;
 	}
 
@@ -313,20 +325,19 @@ strtrim(char *str)
 	return str;
 }
 
-/**
- * Caller must call KVEntry_DA_Free on returned value
- * @return
+/*
+ * Caller must call kv_entry_array_free on returned kv_entry_array
  */
-KVEntry_DA
+kv_entry_array
 get_all_config_entries(char *file_contents)
 {
-	KVEntry_DA entries = KVEntry_DA_New(1);
+	kv_entry_array entries = kv_entry_array_alloc(30);
 
 	char *line_savepoint = NULL;
 
 	char *line = strtok_r(file_contents, "\n", &line_savepoint);
 	while (line != NULL) {
-		KVEntry entry;
+		kv_entry entry;
 		entry.mime_type = strtok(line, "=");
 		entry.program = strtok(NULL, "=");
 		line = strtok_r(NULL, "\n", &line_savepoint);
@@ -337,53 +348,39 @@ get_all_config_entries(char *file_contents)
 		entry.mime_type = strtrim(entry.mime_type);
 		entry.program = strtrim(entry.program);
 
-		KVEntry_DA_Push(&entries, entry);
+		kv_entry_array_push(&entries, entry);
 
 	}
 	return entries;
 }
 
 void
-resave_config_file(FILE *f, KVEntry_DA entries)
+resave_config_file(FILE *f, kv_entry_array entries)
 {
-	//DELETEME
-	for (size_t i = 0; i < entries.len; ++i) {
-		KVEntry *e = &entries.array[i];
-		printf("ENTRY: %s=%s\n", e->mime_type, e->program);
-	}
 	rewind(f);
 	char line[LINE_SIZE];
 	int total_size = 0;
 	for (size_t i = 0; i < entries.len; ++i) {
-		printf("SIZE: %d\n", total_size);
-		KVEntry e = entries.array[i];
+		kv_entry e = entries.data[i];
 		total_size += snprintf(line, LINE_SIZE, "%s=%s\n", e.mime_type,
 				       e.program);
-		printf("SIZE: %d\n", total_size);
-		printf("WRITING: %s\n", line);
-		int res = fputs(line, f);
-		printf("FPUTS RES: %d\n", res);
-		perror(NULL);
+		fputs(line, f);
 	}
 	fflush(f);
 	truncate_config_file(total_size);
 }
 
-/**
- *
- * @param f
- * @param type
- * @param args
- * @return FREE THIS
+/*
+ * Caller must free returned string
  */
 char *
-find_program_in_config(FILE *f, char *type, Args args)
+find_program_in_config(FILE *f, char *type, opn_state args)
 {
 	char *file_contents = load_entire_file(f);
-	KVEntry_DA entries = get_all_config_entries(file_contents);
+	kv_entry_array entries = get_all_config_entries(file_contents);
 	char *program = NULL;
 	for (size_t i = 0; i < entries.len; ++i) {
-		KVEntry *e = &entries.array[i];
+		kv_entry *e = &entries.data[i];
 		if (strcmp(e->mime_type, type) == 0) {
 			if (args.set_default) {
 				e->program = args.program_name;
@@ -395,22 +392,17 @@ find_program_in_config(FILE *f, char *type, Args args)
 
 	if (program == NULL) {
 		if (args.set_default) {
-			KVEntry e = {
+			kv_entry e = {
 				.program = args.program_name,
 				.mime_type = type,
 			};
-			KVEntry_DA_Push(&entries, e);
+			kv_entry_array_push(&entries, e);
 			program = strdup(args.program_name);
 		} else {
 			fprintf(stderr,
 				"No program specified to open things of type blabla"
 				"you can do so by running the same command with -d blabla\n");
 		}
-	}
-	//DELETEME
-	for (size_t i = 0; i < entries.len; ++i) {
-		KVEntry *e = &entries.array[i];
-		printf("ENTRY: %s=%s\n", e->mime_type, e->program);
 	}
 
 	// We need to resave the file with the changes
@@ -419,40 +411,33 @@ find_program_in_config(FILE *f, char *type, Args args)
 	}
 
 	free(file_contents);
-	KVEntry_DA_Free(&entries);
+	kv_entry_array_free(&entries);
 	return program;
 }
 
 int
 main(int argc, char *argv[])
 {
-	// get args
-	// parse all args (use better error messages with suggestions)
-	// get config file
-	// parse config file
-	// update config file if needed
-	// run program with execve
-
-	Args args = parse_arguments(argc, argv);
+	opn_state state = parse_arguments(argc, argv);
 
 	FILE *f = get_config_file();
 	if (f == NULL) {
 		exit(1);
 	}
 
-	char *type = get_file_mime_type(args.file_path);
+	char *type = get_file_mime_type(state.file_path);
 	if (type == NULL) {
 		fclose(f);
 		free(type);
 		exit(1);
 	}
 
-	char *program = find_program_in_config(f, type, args);
+	char *program = find_program_in_config(f, type, state);
 	if (program == NULL) {
 		exit(1);
 	}
 
-	if (args.run_in_background) {
+	if (state.run_in_background) {
 		int pid = getpid();
 		fork();
 		if (getpid() == pid) {
@@ -460,7 +445,7 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if (execlp(program, program, args.file_path, NULL) < 0) {
+	if (execlp(program, program, state.file_path, NULL) < 0) {
 		perror("Error running default program");
 	}
 
