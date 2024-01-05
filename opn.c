@@ -36,7 +36,8 @@ print_usage(void)
 	       "Open FILE with user's preferred application\n\n"
 	       "-d <application>\tOpens FILE with <application> and sets "
 	       "<application> as the preferred application for opening FILEs\n"
-	       "-b\t\t\tLaunches the preferred application in detached mode (background)\n");
+	       "-b\t\t\tLaunches the preferred application in detached mode (background)\n"
+	       "-h\t\t\tShow this message\n");
 }
 
 
@@ -107,9 +108,6 @@ parse_arguments(int argc, char *argv[])
 						optopt);
 					exit(1);
 				} else if (isprint(optopt)) {
-					fprintf(stderr,
-						"Unknown option `-%c'.\n",
-						optopt);
 					exit(1);
 				} else {
 					fprintf(stderr,
@@ -407,12 +405,14 @@ find_program_in_config(FILE *f, char *type, State args)
 			program = strdup(args.program_name);
 		} else {
 			fprintf(stderr,
-				"No program specified to open things of type blabla"
-				"you can do so by running the same command with -d blabla\n");
+				"No application in config found for mimetype: %s\n"
+				"You may rerun this command with -d <application> "
+				"to open the file with <application> and set "
+				"it as the default opener in the config\n", type);
 		}
 	}
 
-	// We need to resave the file with the changes
+	// We need to re-save the file with the changes
 	if (args.set_default) {
 		resave_config_file(f, entries);
 	}

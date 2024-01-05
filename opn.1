@@ -1,0 +1,40 @@
+.TH OPN 1 opn\-VERSION
+.SH NAME
+opn \- opens a file in the user's preferred application
+.SH SYNOPSIS
+.B opn
+.RB { file }
+.SH DESCRIPTION
+opn opens a file in the user's preferred application. To find such application,
+it looks by default on $XDG_CONFIG_HOME/opn/mimeapps.list or in
+~/.config/opn/mimeapps.list in case $XDG_CONFIG_HOME is not defined.
+.P
+The mimeapps.list file is configured with the mimetype followed by an equal
+sign and the application name to be used (that has to be in $PATH). Example:
+.P
+application/epub+zip=zathura
+.br
+video/mp4=mpv
+.SH OPTIONS
+.TP
+.B \-h
+prints help then exits.
+.TP
+.B \-d {application}
+sets the default application to open the mimetype of {file} to {application}
+and launches {application} with the given {file}.
+.TP
+.B \-b
+opens the file in detached mode (in the background) with fork and exits.
+.SH EXAMPLES
+.TP
+.B Open a PDF file
+opn Downloads/book.pdf
+.TP
+.B Open a PDF file with evince and sets it as the default PDF viewer
+opn -d evince Downloads/book.pdf
+.TP
+.B Open a PDF file in detached mode
+opn -b Downloads/book.pdf
+.SH BUGS
+Send all bug reports to ivanrg99@tutanota.com
