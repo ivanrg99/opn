@@ -40,7 +40,6 @@ print_usage(void)
 	       "-h\t\t\tShow this message\n");
 }
 
-
 /*
  * Caller must free returned string
  */
@@ -77,7 +76,6 @@ get_configdir(void)
 	return configfile;
 }
 
-
 State
 parse_arguments(int argc, char *argv[])
 {
@@ -89,6 +87,7 @@ parse_arguments(int argc, char *argv[])
 	State args = {0};
 
 	int c;
+	opterr = 0;
 	while ((c = getopt(argc, argv, "bhd:")) != -1) {
 		switch (c) {
 			case 'b':
@@ -108,6 +107,9 @@ parse_arguments(int argc, char *argv[])
 						optopt);
 					exit(1);
 				} else if (isprint(optopt)) {
+					fprintf(stderr,
+						"Unknown option `-%c'.\n",
+						optopt);
 					exit(1);
 				} else {
 					fprintf(stderr,
@@ -408,7 +410,8 @@ find_program_in_config(FILE *f, char *type, State args)
 				"No application in config found for mimetype: %s\n"
 				"You may rerun this command with -d <application> "
 				"to open the file with <application> and set "
-				"it as the default opener in the config\n", type);
+				"it as the default opener in the config\n",
+				type);
 		}
 	}
 
@@ -453,7 +456,10 @@ main(int argc, char *argv[])
 	}
 
 	if (execlp(program, program, state.file_path, NULL) < 0) {
-		perror("Error running default program");
+		fprintf(stderr, "Error running default program: %s"
+				" for mime type: %s\n",
+			program, type);
+		perror(NULL);
 	}
 
 	cleanup:
