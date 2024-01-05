@@ -15,5 +15,5 @@ Makefile to suit your needs and overwrite defaults.
 
 # Dependencies
 
-Just libmagic. For building, GNU Make and pkg-config, although it would be trivial
+Just libmagic. For building: GNU Make, clang and pkg-config, although it would be trivial
 to change.
