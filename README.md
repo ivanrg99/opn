@@ -1,7 +1,6 @@
 # Description
 
-xdg-open and mimeopen alternative with just libmagic as a dependency. Read the
-man page for more information.
+xdg-open and mimeopen alternative. Read the man page for more information.
 
 # Sample usage
 
@@ -13,3 +12,8 @@ man page for more information.
 
 Just clone the repo and type `make install`. You might need to change the
 Makefile to suit your needs and overwrite defaults.
+
+# Dependencies
+
+Just libmagic. For building, GNU Make and pkg-config, although it would be trivial
+to change.
