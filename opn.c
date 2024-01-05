@@ -16,18 +16,18 @@ typedef struct {
     bool run_in_background;
     char *program_name;
     char *file_path;
-} opn_state;
+} State;
 
 typedef struct {
     char *mime_type;
     char *program;
-} kv_entry;
+} Entry;
 
 typedef struct {
     size_t len;
     size_t cap;
-    kv_entry *data;
-} kv_entry_array;
+    Entry *data;
+} Entries;
 
 void
 print_usage(void)
@@ -77,7 +77,7 @@ get_configdir(void)
 }
 
 
-opn_state
+State
 parse_arguments(int argc, char *argv[])
 {
 	if (argc == 1) {
@@ -85,7 +85,7 @@ parse_arguments(int argc, char *argv[])
 		exit(1);
 	}
 
-	opn_state args = {0};
+	State args = {0};
 
 	int c;
 	while ((c = getopt(argc, argv, "bhd:")) != -1) {
@@ -249,12 +249,12 @@ get_file_mime_type(const char *file_path)
 	return res;
 }
 
-kv_entry_array
-kv_entry_array_alloc(size_t capacity)
+Entries
+entries_alloc(size_t capacity)
 {
-	kv_entry_array d = {0};
+	Entries d = {0};
 	d.cap = capacity;
-	d.data = malloc(sizeof(kv_entry) * capacity);
+	d.data = malloc(sizeof(Entry) * capacity);
 	if (d.data == NULL) {
 		fprintf(stderr, "Could not allocate enough memory\n");
 	}
@@ -262,7 +262,7 @@ kv_entry_array_alloc(size_t capacity)
 }
 
 void
-kv_entry_array_free(kv_entry_array *d)
+entries_free(Entries *d)
 {
 	d->cap = 0;
 	d->len = 0;
@@ -270,12 +270,12 @@ kv_entry_array_free(kv_entry_array *d)
 }
 
 void
-kv_entry_array_push(kv_entry_array *d, kv_entry e)
+entries_push(Entries *d, Entry e)
 {
 	if (d->len == d->cap) {
 		d->cap *= 2;
-		kv_entry *cpy = d->data;
-		d->data = realloc(d->data, d->cap * sizeof(kv_entry));
+		Entry *cpy = d->data;
+		d->data = realloc(d->data, d->cap * sizeof(Entry));
 		if (d->data == NULL) {
 			fprintf(stderr,
 				"Failed to reallocate config entries dynamic data\n");
@@ -314,7 +314,7 @@ load_entire_file(FILE *f)
 }
 
 char *
-strtrim(char *str)
+str_trim(char *str)
 {
 	char *beg = str;
 	char *end = str + strlen(str) - 1;
@@ -330,12 +330,12 @@ strtrim(char *str)
 }
 
 /*
- * Caller must call kv_entry_array_free on returned kv_entry_array
+ * Caller must call entries_free on returned Entries
  */
-kv_entry_array
+Entries
 get_all_config_entries(char *file_contents)
 {
-	kv_entry_array entries = kv_entry_array_alloc(30);
+	Entries entries = entries_alloc(30);
 	if (file_contents == NULL || strlen(file_contents) == 0) {
 		return entries;
 	}
@@ -344,7 +344,7 @@ get_all_config_entries(char *file_contents)
 
 	char *line = strtok_r(file_contents, "\n", &line_savepoint);
 	while (line != NULL) {
-		kv_entry entry;
+		Entry entry;
 		entry.mime_type = strtok(line, "=");
 		entry.program = strtok(NULL, "=");
 		line = strtok_r(NULL, "\n", &line_savepoint);
@@ -352,23 +352,23 @@ get_all_config_entries(char *file_contents)
 			continue;
 		}
 
-		entry.mime_type = strtrim(entry.mime_type);
-		entry.program = strtrim(entry.program);
+		entry.mime_type = str_trim(entry.mime_type);
+		entry.program = str_trim(entry.program);
 
-		kv_entry_array_push(&entries, entry);
+		entries_push(&entries, entry);
 
 	}
 	return entries;
 }
 
 void
-resave_config_file(FILE *f, kv_entry_array entries)
+resave_config_file(FILE *f, Entries entries)
 {
 	rewind(f);
 	char line[LINE_SIZE];
 	int total_size = 0;
 	for (size_t i = 0; i < entries.len; ++i) {
-		kv_entry e = entries.data[i];
+		Entry e = entries.data[i];
 		total_size += snprintf(line, LINE_SIZE, "%s=%s\n", e.mime_type,
 				       e.program);
 		fputs(line, f);
@@ -381,13 +381,13 @@ resave_config_file(FILE *f, kv_entry_array entries)
  * Caller must free returned string
  */
 char *
-find_program_in_config(FILE *f, char *type, opn_state args)
+find_program_in_config(FILE *f, char *type, State args)
 {
 	char *file_contents = load_entire_file(f);
-	kv_entry_array entries = get_all_config_entries(file_contents);
+	Entries entries = get_all_config_entries(file_contents);
 	char *program = NULL;
 	for (size_t i = 0; i < entries.len; ++i) {
-		kv_entry *e = &entries.data[i];
+		Entry *e = &entries.data[i];
 		if (strcmp(e->mime_type, type) == 0) {
 			if (args.set_default) {
 				e->program = args.program_name;
@@ -399,11 +399,11 @@ find_program_in_config(FILE *f, char *type, opn_state args)
 
 	if (program == NULL) {
 		if (args.set_default) {
-			kv_entry e = {
+			Entry e = {
 				.program = args.program_name,
 				.mime_type = type,
 			};
-			kv_entry_array_push(&entries, e);
+			entries_push(&entries, e);
 			program = strdup(args.program_name);
 		} else {
 			fprintf(stderr,
@@ -418,14 +418,14 @@ find_program_in_config(FILE *f, char *type, opn_state args)
 	}
 
 	free(file_contents);
-	kv_entry_array_free(&entries);
+	entries_free(&entries);
 	return program;
 }
 
 int
 main(int argc, char *argv[])
 {
-	opn_state state = parse_arguments(argc, argv);
+	State state = parse_arguments(argc, argv);
 
 	FILE *f = get_config_file();
 	if (f == NULL) {
