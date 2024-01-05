@@ -34,10 +34,8 @@ CFLAGS   += -Wsign-conversion -Wvla
 CFLAGS   += -Wno-unused-command-line-argument
 
 # Libmagic dependency (uses pkg-config, feel free to modify if needed)
-LDFLAGS  += $(shell pkg-config --cflags libmagic)
-CFLAGS   += $(shell pkg-config --libs libmagic)
-#LDFLAGS  += `pkg-config --cflags libmagic`
-#CFLAGS   += `pkg-config --libs libmagic`
+CFLAGS  += `pkg-config --cflags libmagic`
+LDFLAGS += `pkg-config --libs libmagic`
 
 CPPFLAGS += -D_FORTIFY_SOURCE=2
 
