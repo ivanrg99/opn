@@ -12,8 +12,12 @@ MANPREFIX = $(PREFIX)/share/man
 
 CC = clang
 
+CFLAGS   += -fsanitize=address,undefined
+# Uncomment in OpenBSD
+# CFLAGS 	 += -fsanitize=undefined
+
 CFLAGS   += -Wall -Wextra -Wpedantic -std=gnu11
-CFLAGS   += -fsanitize=address,undefined -Wconversion -Wdouble-promotion
+CFLAGS   += -Wconversion -Wdouble-promotion
 CFLAGS   += -fpie -Wstack-protector --param ssp-buffer-size=4
 CFLAGS   += -pedantic -fstack-protector-all -fstack-protector-strong
 CFLAGS   +=  -fpic -D_FORTIFY_SOURCE=2 -Wstack-protector
