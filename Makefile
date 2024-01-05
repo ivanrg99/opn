@@ -19,7 +19,7 @@ CFLAGS   += -Wall -Wextra -Wpedantic -std=gnu11
 CFLAGS   += -Wconversion -Wdouble-promotion
 CFLAGS   += -fpie -Wstack-protector --param ssp-buffer-size=4
 CFLAGS   += -pedantic -fstack-protector-all -fstack-protector-strong
-CFLAGS   +=  -fpic -D_FORTIFY_SOURCE=2 -Wstack-protector
+CFLAGS   +=  -fpic -Wstack-protector
 CFLAGS   += -Werror=format-security -Werror=implicit-function-declaration
 CFLAGS   += -pedantic-errors -Wunused-result -Wchar-subscripts
 CFLAGS   += -Wformat-security -fstack-clash-protection -Wdouble-promotion
@@ -31,9 +31,13 @@ CFLAGS   += -Wshadow -Wpointer-arith -Wcomments -Wwrite-strings
 CFLAGS   += -Wcast-align -Wdangling-else -Wenum-compare -Wenum-conversion
 CFLAGS   += -Wsign-conversion -Wvla
 
+CFLAGS   += -Wno-unused-command-line-argument
+
 # Libmagic dependency (uses pkg-config, feel free to modify if needed)
 LDFLAGS  += `pkg-config --cflags libmagic`
-CPPFLAGS += `pkg-config --libs libmagic`
+CFLAGS   += `pkg-config --libs libmagic`
+
+CPPFLAGS += -D_FORTIFY_SOURCE=2
 
 # Utilities
 RM := rm -rf
