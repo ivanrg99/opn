@@ -10,24 +10,23 @@ MANPREFIX = $(PREFIX)/share/man
 # Uncomment in OpenBSD
 #MANPREFIX = ${PREFIX}/man
 
-CC = gcc
+CC = clang
 
 CFLAGS   += -Wall -Wextra -Wpedantic -std=gnu11
 CFLAGS   += -fsanitize=address,undefined -Wconversion -Wdouble-promotion
-CFLAGS   += -fpie -Wl,-pie -Wstack-protector --param ssp-buffer-size=4
+CFLAGS   += -fpie -Wstack-protector --param ssp-buffer-size=4
 CFLAGS   += -pedantic -fstack-protector-all -fstack-protector-strong
-CFLAGS   +=  -fpic -D_FORTIFY_SOURCE=2 -Wzero-length-bounds -Wtrampolines
-CFLAGS   += -Werror=format-security -Werror=implicit-function-declaration -Wstack-protector
-CFLAGS   += -pedantic-errors -Wunused-result -Wchar-subscripts -Wdouble-promotion
-CFLAGS   += -Wformat-security -Wformat-signedness -Wformat-overflow -fstack-clash-protection
-CFLAGS   += -Wimplicit-fallthrough -Wno-if-not-aligned -Wignored-qualifiers -Wl,-z,noexecstack
+CFLAGS   +=  -fpic -D_FORTIFY_SOURCE=2 -Wstack-protector
+CFLAGS   += -Werror=format-security -Werror=implicit-function-declaration
+CFLAGS   += -pedantic-errors -Wunused-result -Wchar-subscripts
+CFLAGS   += -Wformat-security -fstack-clash-protection -Wdouble-promotion
+CFLAGS   += -Wimplicit-fallthrough -Wignored-qualifiers
 CFLAGS   += -Wmisleading-indentation -Wswitch -Wunused-parameter -ftrapv 
-CFLAGS   += -Wunused-variable -Wuninitialized -Wmaybe-uninitialized -Wstrict-overflow=5
-CFLAGS   += -Wstringop-overflow=4 -Walloca -Warray-bounds -Wl,-z,relro,-z,now
-CFLAGS   += -Wbool-compare -Wduplicated-branches -Wduplicated-cond
-CFLAGS   += -Wshadow -Wunsafe-loop-optimizations -Wpointer-arith -Wcomments -Wwrite-strings
-CFLAGS   += -Wcast-align -Wdangling-else -Wenum-compare -Wenum-conversion -Wsign-compare
-CFLAGS   += -Wsign-conversion -Wlogical-op -Wvla -Wvector-operation-performance
+CFLAGS   += -Wunused-variable -Wuninitialized
+CFLAGS   += -Walloca -Warray-bounds -Wsign-compare
+CFLAGS   += -Wshadow -Wpointer-arith -Wcomments -Wwrite-strings
+CFLAGS   += -Wcast-align -Wdangling-else -Wenum-compare -Wenum-conversion
+CFLAGS   += -Wsign-conversion -Wvla
 
 # Libmagic dependency (uses pkg-config, feel free to modify if needed)
 LDFLAGS  += `pkg-config --cflags libmagic`
