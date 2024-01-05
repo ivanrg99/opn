@@ -196,12 +196,16 @@ get_config_file(void)
 
 	/* Open config file */
 	FILE *f = fopen(config_file, "r+");
+	/* If it can't open, create it */
 	if (f == NULL) {
-		fprintf(stderr, "ERROR: Could not open %s at directory %s\n",
+		f = fopen(config_file, "w+");
+	}
+
+	/* Error check */
+	if (f == NULL) {
+		fprintf(stderr,
+			"ERROR: Could not read/create %s at directory %s\n",
 			DEFAULT_CONFIG_FILE_NAME, dir);
-		free(dir);
-		free(config_file);
-		return NULL;
 	}
 
 	free(config_file);
@@ -332,6 +336,9 @@ kv_entry_array
 get_all_config_entries(char *file_contents)
 {
 	kv_entry_array entries = kv_entry_array_alloc(30);
+	if (file_contents == NULL || strlen(file_contents) == 0) {
+		return entries;
+	}
 
 	char *line_savepoint = NULL;
 
