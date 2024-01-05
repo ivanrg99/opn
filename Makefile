@@ -12,9 +12,8 @@ MANPREFIX = $(PREFIX)/share/man
 
 CC = clang
 
+# Comment this line in OpenBSD
 CFLAGS   += -fsanitize=address,undefined
-# Uncomment in OpenBSD
-# CFLAGS 	 += -fsanitize=undefined
 
 CFLAGS   += -Wall -Wextra -Wpedantic -std=gnu11
 CFLAGS   += -Wconversion -Wdouble-promotion
