@@ -10,28 +10,12 @@ MANPREFIX = $(PREFIX)/share/man
 # Uncomment in OpenBSD
 #MANPREFIX = ${PREFIX}/man
 
-CC = clang
+# CC = clang
 
 # Comment this line in OpenBSD
 CFLAGS   += -fsanitize=address,undefined
 
-CFLAGS   += -Wall -Wextra -Wpedantic -std=gnu11
-CFLAGS   += -Wconversion -Wdouble-promotion
-CFLAGS   += -fpie -Wstack-protector --param ssp-buffer-size=4
-CFLAGS   += -pedantic -fstack-protector-all -fstack-protector-strong
-CFLAGS   +=  -fpic -Wstack-protector
-CFLAGS   += -Werror=format-security -Werror=implicit-function-declaration
-CFLAGS   += -pedantic-errors -Wunused-result -Wchar-subscripts
-CFLAGS   += -Wformat-security -fstack-clash-protection -Wdouble-promotion
-CFLAGS   += -Wimplicit-fallthrough -Wignored-qualifiers
-CFLAGS   += -Wmisleading-indentation -Wswitch -Wunused-parameter -ftrapv 
-CFLAGS   += -Wunused-variable -Wuninitialized
-CFLAGS   += -Walloca -Warray-bounds -Wsign-compare
-CFLAGS   += -Wshadow -Wpointer-arith -Wcomments -Wwrite-strings
-CFLAGS   += -Wcast-align -Wdangling-else -Wenum-compare -Wenum-conversion
-CFLAGS   += -Wsign-conversion -Wvla
-
-CFLAGS   += -Wno-unused-command-line-argument
+CFLAGS   += -Wall -Wextra -Wpedantic 
 
 # Libmagic dependency (uses pkg-config, feel free to modify if needed)
 CFLAGS  += `pkg-config --cflags libmagic`
@@ -42,7 +26,7 @@ CPPFLAGS += -D_FORTIFY_SOURCE=2
 # Utilities
 RM := rm -rf
 
-BIN  = opn
+BIN = opn
 SRC = opn.c
 OBJ = ${SRC:.c=.o}
 
