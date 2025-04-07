@@ -12,9 +12,6 @@ MANPREFIX = $(PREFIX)/share/man
 
 CC = clang
 
-# Comment this line in OpenBSD
-CFLAGS   += -fsanitize=address,undefined
-
 CFLAGS   += -Wall -Wextra -Wpedantic -std=gnu11 
 
 # Libmagic dependency (uses pkg-config, feel free to modify if needed)
