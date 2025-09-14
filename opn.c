@@ -8,6 +8,7 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 #include "config.h"
 
@@ -451,6 +452,15 @@ main(int argc, char *argv[])
 		if (getpid() == pid) {
 			goto cleanup;
 		}
+		int dev_null = open("/dev/null", O_WRONLY);
+		if (dev_null == -1) {
+			perror("Failed to open /dev/null");
+			exit(1);
+		}
+
+		dup2(dev_null, STDOUT_FILENO);
+		dup2(dev_null, STDERR_FILENO);
+		close(dev_null);
 	}
 
 	if (execlp(program, program, state.file_path, NULL) < 0) {
