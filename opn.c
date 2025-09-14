@@ -12,21 +12,21 @@
 #include "config.h"
 
 typedef struct {
-    bool set_default;
-    bool run_in_background;
-    char *program_name;
-    char *file_path;
+	bool set_default;
+	bool run_in_background;
+	char *program_name;
+	char *file_path;
 } State;
 
 typedef struct {
-    char *mime_type;
-    char *program;
+	char *mime_type;
+	char *program;
 } Entry;
 
 typedef struct {
-    size_t len;
-    size_t cap;
-    Entry *data;
+	size_t len;
+	size_t cap;
+	Entry *data;
 } Entries;
 
 void
@@ -70,8 +70,8 @@ get_configdir(void)
 		exit(1);
 	}
 
-	snprintf(configfile, n,
-		 "%s/%s/%s", HOME, XDG_CONFIG_HOME, DEFAULT_SETTINGS_FOLDER);
+	snprintf(configfile, n, "%s/%s/%s", HOME, XDG_CONFIG_HOME,
+		 DEFAULT_SETTINGS_FOLDER);
 
 	return configfile;
 }
@@ -84,41 +84,40 @@ parse_arguments(int argc, char *argv[])
 		exit(1);
 	}
 
-	State args = {0};
+	State args = { 0 };
 
 	int c;
 	opterr = 0;
 	while ((c = getopt(argc, argv, "bhd:")) != -1) {
 		switch (c) {
-			case 'b':
-				args.run_in_background = true;
-				break;
-			case 'd':
-				args.set_default = true;
-				args.program_name = optarg;
-				break;
-			case 'h':
-				print_usage();
-				exit(0);
-			case '?':
-				if (optopt == 'd') {
-					fprintf(stderr,
-						"Option -%c needs to be followed by an application name.\n",
-						optopt);
-					exit(1);
-				} else if (isprint(optopt)) {
-					fprintf(stderr,
-						"Unknown option `-%c'.\n",
-						optopt);
-					exit(1);
-				} else {
-					fprintf(stderr,
-						"Unknown option character `\\x%d'.\n",
-						optopt);
-					exit(1);
-				}
-			default:
-				abort();
+		case 'b':
+			args.run_in_background = true;
+			break;
+		case 'd':
+			args.set_default = true;
+			args.program_name = optarg;
+			break;
+		case 'h':
+			print_usage();
+			exit(0);
+		case '?':
+			if (optopt == 'd') {
+				fprintf(stderr,
+					"Option -%c needs to be followed by an application name.\n",
+					optopt);
+				exit(1);
+			} else if (isprint(optopt)) {
+				fprintf(stderr, "Unknown option `-%c'.\n",
+					optopt);
+				exit(1);
+			} else {
+				fprintf(stderr,
+					"Unknown option character `\\x%d'.\n",
+					optopt);
+				exit(1);
+			}
+		default:
+			abort();
 		}
 	}
 
@@ -162,7 +161,7 @@ truncate_config_file(int size)
 		 DEFAULT_CONFIG_FILE_NAME);
 
 	/* Truncate config file */
-	int res = truncate(config_file, (long) size);
+	int res = truncate(config_file, (long)size);
 
 	free(config_file);
 	free(dir);
@@ -252,7 +251,7 @@ get_file_mime_type(const char *file_path)
 Entries
 entries_alloc(size_t capacity)
 {
-	Entries d = {0};
+	Entries d = { 0 };
 	d.cap = capacity;
 	d.data = malloc(sizeof(Entry) * capacity);
 	if (d.data == NULL) {
@@ -294,7 +293,7 @@ load_entire_file(FILE *f)
 {
 	size_t size;
 	fseek(f, 0, SEEK_END);
-	size = (size_t) ftell(f);
+	size = (size_t)ftell(f);
 	rewind(f);
 	char *contents = malloc(size * sizeof(char) + 1);
 	if (contents == NULL) {
@@ -356,7 +355,6 @@ get_all_config_entries(char *file_contents)
 		entry.program = str_trim(entry.program);
 
 		entries_push(&entries, entry);
-
 	}
 	return entries;
 }
@@ -456,13 +454,14 @@ main(int argc, char *argv[])
 	}
 
 	if (execlp(program, program, state.file_path, NULL) < 0) {
-		fprintf(stderr, "Error running default program: %s"
-				" for mime type: %s\n",
+		fprintf(stderr,
+			"Error running default program: %s"
+			" for mime type: %s\n",
 			program, type);
 		perror(NULL);
 	}
 
-	cleanup:
+cleanup:
 	free(program);
 	fclose(f);
 	free(type);

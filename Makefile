@@ -18,8 +18,6 @@ CFLAGS   += -Wall -Wextra -Wpedantic -std=gnu11
 CFLAGS  += `pkg-config --cflags libmagic`
 LDFLAGS += `pkg-config --libs libmagic`
 
-CPPFLAGS += -D_FORTIFY_SOURCE=2
-
 # Utilities
 RM := rm -rf
 
