@@ -1,7 +1,7 @@
+.POSIX:
+
 # See LICENSE file for copyright and license details.
 VERSION = 0.1
-
-.POSIX:
 
 # Install paths
 PREFIX = /usr/local
@@ -12,14 +12,11 @@ MANPREFIX = $(PREFIX)/share/man
 
 CC = clang
 
-CFLAGS   += -Wall -Wextra -Wpedantic -std=gnu11 
+CFLAGS   += -Wall -Wextra -Wpedantic -std=c99 
 
 # Libmagic dependency (uses pkg-config, feel free to modify if needed)
 CFLAGS  += `pkg-config --cflags libmagic`
 LDFLAGS += `pkg-config --libs libmagic`
-
-# Utilities
-RM := rm -rf
 
 BIN = opn
 SRC = opn.c
@@ -32,7 +29,7 @@ $(BIN) : $(OBJ)
 	$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $^ -o $@
 
 clean:
-	$(RM) $(OBJ) $(BIN)
+	rm $(OBJ) $(BIN)
 
 install: release
 	strip $(BIN)
@@ -44,7 +41,8 @@ install: release
 	chmod 644 $(DESTDIR)$(MANPREFIX)/man1/$(BIN).1
 
 uninstall:
-	rm -f $(DESTDIR)$(PREFIX)/bin/$(BIN) $(DESTDIR)$(MANDIR)/$(MAN)
+	rm $(DESTDIR)$(PREFIX)/bin/$(BIN) 
+	rm $(DESTDIR)$(MANPREFIX)/man1/$(BIN).1
 
 debug: CFLAGS += -DDEBUG -g3
 debug: $(BIN)
