@@ -29,9 +29,9 @@ $(BIN) : $(OBJ)
 	$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $^ -o $@
 
 clean:
-	rm $(OBJ) $(BIN)
+	rm -f $(OBJ) $(BIN)
 
-install: release
+install: all
 	strip $(BIN)
 	mkdir -p $(DESTDIR)$(PREFIX)/bin
 	cp -f $(BIN) $(DESTDIR)$(PREFIX)/bin
@@ -44,11 +44,5 @@ uninstall:
 	rm $(DESTDIR)$(PREFIX)/bin/$(BIN) 
 	rm $(DESTDIR)$(MANPREFIX)/man1/$(BIN).1
 
-debug: CFLAGS += -DDEBUG -g3
-debug: $(BIN)
-
-release: CFLAGS += -O3 -DNDEBUG
-release: clean
-release: $(BIN)
 
 .PHONY: clean
