@@ -10,8 +10,10 @@ MANPREFIX = $(PREFIX)/share/man
 # Uncomment in OpenBSD
 #MANPREFIX = ${PREFIX}/man
 
+CC = cc
+
 # Main flags
-CFLAGS  += -Wall -Wextra -Wpedantic -std=c99
+CFLAGS  += -Wall -Wextra -Wpedantic -std=gnu99
 
 # Libmagic dependency (uses pkg-config, feel free to modify if needed)
 CFLAGS  += `pkg-config --cflags libmagic`
