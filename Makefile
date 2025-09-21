@@ -13,15 +13,15 @@ MANPREFIX = $(PREFIX)/share/man
 CC = cc
 PKG_CONFIG = pkg-config
 
-# Main flags
-CFLAGS += -Wall -Wextra -Wpedantic -std=gnu99
-
 # Libmagic dependency
 MAGIC_CFLAGS  = `$(PKG_CONFIG) --cflags libmagic`
 MAGIC_LIBS    = `$(PKG_CONFIG) --libs libmagic`
 
-CFLAGS  += $(MAGIC_CFLAGS)
-LDFLAGS += $(MAGIC_LIBS)
+# Main flags
+C_MAIN_FLAGS = -Wall -Wextra -Wpedantic -std=gnu99
+
+CFLAGS  = $(C_MAIN_FLAGS) $(MAGIC_CFLAGS)
+LDFLAGS = $(MAGIC_LIBS)
 
 BIN = opn
 SRC = opn.c
