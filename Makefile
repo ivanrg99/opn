@@ -18,9 +18,9 @@ MAGIC_CFLAGS  = `$(PKG_CONFIG) --cflags libmagic`
 MAGIC_LIBS    = `$(PKG_CONFIG) --libs libmagic`
 
 # Main flags
-C_MAIN_FLAGS = -Wall -Wextra -Wpedantic -std=gnu99
+MAIN_CFLAGS = -Wall -Wextra -Wpedantic -std=gnu99
 
-CFLAGS  = $(C_MAIN_FLAGS) $(MAGIC_CFLAGS)
+CFLAGS  = $(MAIN_CFLAGS) $(MAGIC_CFLAGS)
 LDFLAGS = $(MAGIC_LIBS)
 
 BIN = opn
