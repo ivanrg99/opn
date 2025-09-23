@@ -6,6 +6,7 @@ VERSION = 0.1
 # Install paths
 PREFIX = /usr/local
 MANPREFIX = $(PREFIX)/share/man
+DESTDIR =
 
 # Uncomment in OpenBSD
 #MANPREFIX = ${PREFIX}/man
@@ -17,11 +18,9 @@ PKG_CONFIG = pkg-config
 MAGIC_CFLAGS  = `$(PKG_CONFIG) --cflags libmagic`
 MAGIC_LIBS    = `$(PKG_CONFIG) --libs libmagic`
 
-# Main flags
-MAIN_CFLAGS = -Wall -Wextra -Wpedantic -std=gnu99
-
-CFLAGS  = $(MAIN_CFLAGS) $(MAGIC_CFLAGS)
-LDFLAGS = $(MAGIC_LIBS)
+# Default flags
+CFLAGS = -Wall -Wextra -Wpedantic -std=gnu99
+LDFLAGS =
 
 BIN = opn
 SRC = opn.c
@@ -31,7 +30,7 @@ OBJ = ${SRC:.c=.o}
 all: $(BIN)
 
 $(BIN) : $(OBJ)
-	$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $^ -o $@
+	$(CC) $(CFLAGS) $(CPPFLAGS) $(MAGIC_CFLAGS) $(LDFLAGS) $(MAGIC_LIBS) $^ -o $@
 
 clean:
 	rm -f $(OBJ) $(BIN)
