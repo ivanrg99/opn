@@ -15,6 +15,7 @@
 typedef struct {
 	bool set_default;
 	bool run_in_background;
+	bool is_http_url;
 	char *program_name;
 	char *file_path;
 } State;
@@ -127,6 +128,13 @@ parse_arguments(int argc, char *argv[])
 		fprintf(stderr, "ERROR: Missing file to open\n");
 		exit(1);
 	}
+
+	if (strstr(args.file_path, "http://") ||
+	    strstr(args.file_path, "https://")) {
+		args.is_http_url = true;
+		return args;
+	}
+
 	if (access(args.file_path, F_OK) != 0) {
 		fprintf(stderr, "ERROR: Could not find file %s\n",
 			args.file_path);
@@ -434,11 +442,17 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
-	char *type = get_file_mime_type(state.file_path);
-	if (type == NULL) {
-		fclose(f);
-		free(type);
-		exit(1);
+	char *type = NULL;
+	if (state.is_http_url) {
+		type = strdup("link");
+
+	} else {
+		type = get_file_mime_type(state.file_path);
+		if (type == NULL) {
+			fclose(f);
+			free(type);
+			exit(1);
+		}
 	}
 
 	char *program = find_program_in_config(f, type, state);
